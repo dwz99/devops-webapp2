@@ -16,12 +16,11 @@ pipeline {
       parallel {
         stage('Build') {
           steps {
-            sh '''whoami
-date
-echo $PATH
+            sh '''RELEASE=webapp.war
 pwd
-ls -la
-./gradlew build --info'''
+./gradlew build -Pwarname=$RELEASE --info
+ls -la build/libs/
+cp ./build/libs/$RELEASE ./docker'''
           }
         }
 
@@ -42,9 +41,28 @@ echo run parallel !!'''
       }
     }
 
+    stage('Packaging') {
+      steps {
+        sh '''pwd
+cd ./docker
+docker build -t docker.sas.com/webapp2-2020:$BUILD_ID .
+docker tag docker.sas.com/webapp2-2020:$BUILD_ID docker.sas.com/webapp2-2020:latest
+docker images'''
+      }
+    }
+
     stage('Publish') {
       steps {
-        archiveArtifacts(artifacts: 'build/libs/*.war', fingerprint: true, onlyIfSuccessful: true)
+        script {
+          withCredentials([usernamePassword(credentialsId: 'sas-dockerhub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]){
+            sh '''
+docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+docker push docker.sas.com/webapp2-2020:$BUILD_ID
+docker push docker.sas.com/webapp2-2020:latest
+'''
+          }
+        }
+
       }
     }
 
