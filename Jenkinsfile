@@ -56,7 +56,7 @@ docker images'''
         script {
           withCredentials([usernamePassword(credentialsId: 'sas-dockerhub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]){
             sh '''
-docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+docker login docker.sas.com -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 docker push docker.sas.com/webapp2-2020:$BUILD_ID
 docker push docker.sas.com/webapp2-2020:latest
 '''
